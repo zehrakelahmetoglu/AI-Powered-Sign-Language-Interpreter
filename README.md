@@ -1,0 +1,1 @@
+# Yapay-Zeka-Destekli-Isaret-Dili-Tercumani
