@@ -1,4 +1,4 @@
-<img width="1648" height="294" alt="image" src="https://github.com/user-attachments/assets/0b0c03f1-a434-456d-b718-fda7aff8a918" /># AI-Based Sign Language Interpreter
+AI-Based Sign Language Interpreter
 
 ## Project Overview
 
