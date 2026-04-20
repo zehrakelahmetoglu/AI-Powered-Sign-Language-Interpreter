@@ -100,7 +100,7 @@ def _ytdlp() -> list:
 # ─────────────────────────────────────────────────────────────
 
 CHANNEL_URL     = "https://www.youtube.com/@isaretdiliegitimi5504/videos"
-PROJECT_ROOT    = Path(__file__).resolve().parent.parent
+PROJECT_ROOT    = Path(__file__).resolve().parent
 DATA_DIR        = PROJECT_ROOT / "data"
 MODEL_DIR       = PROJECT_ROOT / "models"
 TMP_DIR         = PROJECT_ROOT / "tmp_videos"
