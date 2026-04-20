@@ -17,6 +17,7 @@ numpy>=1.26.0
 pandas>=2.2.0
 scikit-learn>=1.4.0
 roboflow>=1.1.0
+yt-dlp>=2025.1.0
 
 # ── Visualization ────────────────────────────
 matplotlib>=3.8.0

@@ -16,7 +16,7 @@ Kullanım:
 import os
 import numpy as np
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 
 def verify_dataset(data_dir: str) -> None:
