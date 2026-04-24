@@ -1,162 +1,72 @@
-# AI-Powered Sign Language Interpreter
+# AI-Powered Sign Language Interpreter (Local Dataset Pipeline)
 
-This repository focuses on dataset creation and validation workflows for a Turkish Sign Language (TSL) interpreter project.
+Bu depo, İşaret Dili Tercümanı projesi için **yerel video veri setlerinin işlenmesi** ve **LSTM model eğitimi** süreçlerine odaklanmaktadır.
 
-## Scope
+## Kapsam
 
-Current implementation includes:
+- **Yerel Video İşleme**: ChaLearn/Local dataset videolarından MediaPipe landmark dizileri çıkarımı.
+- **LSTM Model Eğitimi**: RTX 4060 için optimize edilmiş, mixed-precision destekli eğitim pipeline'ı.
+- **Webcam Veri Toplama**: MediaPipe ile anlık webcam üzerinden veri seti oluşturma.
 
-- Webcam-based landmark sequence collection (MediaPipe Tasks API)
-- YouTube-based dataset generation pipeline (yt-dlp + MediaPipe)
-- Dataset verification tools for `.npy` sequence integrity
+## Repo Yapısı
 
-This repository currently does not include full model training and real-time inference application code.
+- `local_dataset_processor.py`: Yerel `_color.mp4` videolarını tam 30 frame'e resample eder ve `(30, 63)` landmark dizileri üretir.
+- `train_lstm.py`: RTX 4060 için optimize edilmiş (mixed precision, cuDNN LSTM) Keras eğitim scripti.
+- `collect_data.py`: Webcam üzerinden elle veri toplamak için kullanılır.
+- `_test_import.py`: MediaPipe ve OpenCV ortam kontrolü.
+- `data/`: `.npy` formatındaki landmark veri setlerinin saklandığı kök dizin.
+- `models/`: MediaPipe `.task` modelleri ve eğitilen Keras modellerinin saklandığı dizin.
 
-## Repository Structure
+## Kurulum
 
-- `collect_data.py`: Captures webcam frames and saves sign sequences as `(30, 63)` arrays.
-- `youtube_dataset_builder.py`: Downloads videos from a target channel and converts them to landmark sequences.
-- `verify_data.py`: Validates dataset files (shape checks, NaN checks, file read checks).
-- `_test_import.py`: Basic environment check (MediaPipe/OpenCV/Numpy/model file).
-- `data/`: Dataset root directory (one class folder per sign label).
-- `models/`: Stores model assets (for example `hand_landmarker.task`).
-- `data_collection/`: Mirror copies of the same tooling scripts.
-
-## Requirements
-
-- Python 3.12+
-- Webcam (for `collect_data.py`)
-- Internet connection (first model download and YouTube pipeline)
-
-Install dependencies:
+1. Gereksinimleri yükleyin:
 
 ```bash
-python -m venv .venv
-.\.venv\Scripts\activate
-python -m pip install --upgrade pip
 pip install -r requirements.txt
+# Ek olarak TensorFlow (CUDA destekli) önerilir:
+pip install tensorflow[and-cuda]
 ```
 
-## Quick Start
-
-1. Verify your environment:
+2. Ortamı test edin:
 
 ```bash
 python _test_import.py
 ```
 
-2. Collect manual webcam data:
+## Kullanım
 
+### 1. Yerel Videoları İşleme
+Harici diskteki veya yerel dizindeki videoları (ChaLearn formatında) `.npy` dosyalarına dönüştürmek için:
+
+```bash
+python local_dataset_processor.py --source "/path/to/videos" --workers 4
+```
+
+### 2. LSTM Model Eğitimi
+İşlenmiş verilerle RTX 4060 üzerinde eğitim başlatmak için:
+
+```bash
+python train_lstm.py --epochs 100 --batch-size 64
+```
+
+### 3. Webcam ile Veri Toplama
 ```bash
 python collect_data.py
 ```
 
-3. Verify collected dataset:
+## Veri Formatı
 
-```bash
-python verify_data.py
-```
+- **Dosya Tipi**: `.npy`
+- **Boyut (Shape)**: `(30, 63)` (30 frame x 21 landmark x 3 koordinat)
+- **Normalizasyon**: Bilek (wrist) noktasına göre bağıl koordinatlar.
 
-4. Measure dataset readiness score:
-
-```bash
-python dataset_health_score.py
-```
-
-## YouTube Dataset Builder
-
-Run full pipeline:
-
-```bash
-python youtube_dataset_builder.py
-```
-
-Common options:
-
-```bash
-python youtube_dataset_builder.py --limit 20
-python youtube_dataset_builder.py --cats alfabe sayilar
-python youtube_dataset_builder.py --verify
-python youtube_dataset_builder.py --no-skip
-```
-
-Available categories:
-
-- `alfabe`
-- `sayilar`
-- `icecekler`
-- `aylar`
-- `aile`
-- `zamirler`
-- `fiiller`
-
-## Data Format
-
-Expected sample format:
-
-- File type: `.npy`
-- Shape: `(30, 63)`
-- Dtype: `float32`
-- Meaning: 30 frames x 21 landmarks x 3 coordinates (x, y, z)
-
-Directory example:
-
-```text
-data/
-	MERHABA/
-		0.npy
-		1.npy
-	EVET/
-		0.npy
-```
-
-## Backlog Planning And Handoff
-
-Generate class-based backlog and teammate assignment files:
-
-```bash
-python collection_backlog_planner.py --target 20 --top 120 --people 2 --daily-target-per-person 80
-```
-
-Outputs:
-
-- `collection_backlog.csv`: Class counts and missing samples to target.
-- `handoff_tasks.md`: Ready-to-use teammate assignment checklist.
-- `NEXT_STEPS_DATA.md`: Operational handoff guide.
-
-## Notes
-
-- `hand_landmarker.task` is downloaded automatically into `models/` if not present.
-- Root scripts resolve paths relative to the repository root (`data/`, `models/`).
-- `youtube_dataset_builder.py` requires `yt-dlp` (included in `requirements.txt`).
-
-## Troubleshooting
-
-- If MediaPipe import fails:
-	- Recreate venv and run `pip install -r requirements.txt`.
-- If webcam cannot open:
-	- Close other apps using camera and check `CAMERA_INDEX` in `collect_data.py`.
-- If YouTube download fails:
-	- Ensure internet access and retry.
-	- Run `python -m yt_dlp --version` to verify installation.
-- If verification reports shape errors:
-	- Remove corrupted `.npy` files and recollect that class.
-
-## Contributing
-
-1. Fork the repository.
-2. Create a feature branch.
-3. Commit your changes.
-4. Open a pull request.
-
-## License
-
-MIT. See `LICENSE` for details.
-
-## Team
+## Ekip
 
 - Zehra Kelahmetoglu - Frontend
 - Atakan Yilmaz - Data
 - Zeynep Otegen - Optimization and Documentation
 - Elifnur Gunay - Test and Maintenance
 - Sevda Tuba Ehlibeyt - Backend
+
+## Lisans
+MIT
