@@ -2,7 +2,7 @@
 AI-Powered Sign Language Interpreter
 =====================================
 Module  : LSTM Model Trainer
-Author  : Atakan Yılmaz (AI & Data)
+Author  : Atakan Yılmaz and Zeynep Ötegen (AI & Data)
 Version : 1.0.0
 
 Açıklama:
