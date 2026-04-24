@@ -208,3 +208,12 @@ __marimo__/
 
 # Local instruction files
 CLAUDE.md
+
+# Veri dosyaları (local_dataset_processor.py ile üretilir)
+data/
+
+# Log dosyaları
+logs/
+
+# Geçici videolar
+tmp_videos/
