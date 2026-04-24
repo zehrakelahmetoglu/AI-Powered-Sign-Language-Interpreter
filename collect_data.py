@@ -2,7 +2,7 @@
 AI-Powered Sign Language Interpreter
 =====================================
 Module  : Data Collection
-Author  : Atakan Yılmaz (AI & Data)
+Author  : Atakan Yılmaz and Zeynep Ötegen (AI & Data)
 Version : 2.0.0  (MediaPipe Tasks API — v0.10.x+ / Python 3.13 uyumlu)
 
 Açıklama:
