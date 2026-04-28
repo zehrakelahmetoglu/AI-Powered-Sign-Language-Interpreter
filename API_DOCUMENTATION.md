@@ -42,7 +42,7 @@ The frontend must send the captured frame as a Base64 encoded string inside a JS
 
 ```json
 {
-  "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD..."
+  "image_data": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD..."
 }
 ```
 
@@ -78,7 +78,7 @@ This endpoint processes short, pre-recorded videos. The backend extracts frames 
 
 * **URL:** `/video-tahmin-et`
 * **Method:** `POST`
-* **Content-Type:** `application/json`
+* **Content-Type:** `multipart/form-data`
 
 ### Request Payload
 The video file must be converted to a Base64 string before sending.
@@ -94,10 +94,10 @@ The video file must be converted to a Base64 string before sending.
 * **Body:**
 ```json
 {
-  "prediction": "Doktor",
-  "confidence": 0.92,
-  "status": "success",
-  "type": "VIDEO"
+  "filename": "video_test.mp4",
+  "islenen_kare_sayisi": 5,
+  "mesaj": "Video başarıyla analiz edildi.",
+  "type": "VIDEO_PARCALAMA_TESTI"
 }
 ```
 
