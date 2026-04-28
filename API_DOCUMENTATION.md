@@ -22,8 +22,7 @@ Checks if the API and backend services are up and running.
 * **Body:**
 ```json
 {
-  "status": "active",
-  "message": "API is running successfully."
+  "mesaj": "İşaret Dili API Çalışıyor - Video ve Fotoğraf Hazır!"
 }
 ```
 
@@ -54,8 +53,6 @@ Returns the predicted sign language translation.
 ```json
 {
   "prediction": "Merhaba",
-  "confidence": 0.98,
-  "status": "success",
   "type": "IMAGE"
 }
 ```
@@ -81,21 +78,18 @@ This endpoint processes short, pre-recorded videos. The backend extracts frames 
 * **Content-Type:** `multipart/form-data`
 
 ### Request Payload
-The video file must be converted to a Base64 string before sending.
 
-```json
-{
-  "video": "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28..."
-}
-```
+
+Key: file
+Type: File (Seçilen video dosyası)
 
 ### Success Response
 * **Code:** 200 OK
 * **Body:**
 ```json
 {
-  "filename": "video_test.mp4",
-  "islenen_kare_sayisi": 5,
+  "filename": "video.mp4",
+  "islenen_kare_sayisi": 10,
   "mesaj": "Video başarıyla analiz edildi.",
   "type": "VIDEO_PARCALAMA_TESTI"
 }
