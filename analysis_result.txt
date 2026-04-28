@@ -1,0 +1,45 @@
+Toplam sinif  : 255
+Toplam sekans : 291
+Ort seq/sinif : 1.1
+
+Sekans dagilimi:
+  1 sekansli sinif: 222 adet
+  2 sekansli sinif: 30 adet
+  3 sekansli sinif: 3 adet
+
+2+ sekansli siniflar:
+  20                             3 sekans
+  G_HARFI                        3 sekans
+  ONIKI                          3 sekans
+  22                             2 sekans
+  30                             2 sekans
+  40                             2 sekans
+  ABLA                           2 sekans
+  BEBEK                          2 sekans
+  BOS                            2 sekans
+  C_HARFI                        2 sekans
+  CETE                           2 sekans
+  DUGUN                          2 sekans
+  EKIM                           2 sekans
+  EYLUL                          2 sekans
+  HAZIRAN                        2 sekans
+  I_HARFI                        2 sekans
+  KASIM                          2 sekans
+  KUZEN                          2 sekans
+  MART                           2 sekans
+  NISAN                          2 sekans
+  O_HARFI                        2 sekans
+  ON                             2 sekans
+  ONBIR                          2 sekans
+  ONDORT                         2 sekans
+  ONLAR                          2 sekans
+  ONUC                           2 sekans
+  ONUN                           2 sekans
+  S_HARFI                        2 sekans
+  SENIN                          2 sekans
+  SIZ                            2 sekans
+  SU                             2 sekans
+  SUBAT                          2 sekans
+  U_HARFI                        2 sekans
+
+Toplam 2+ sekansli: 33 sinif
