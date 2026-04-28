@@ -57,7 +57,13 @@
 
 4- You can start the program with pressing "Kamera Başlat" button  
 
-5- Press 'Q' to quit the program
+5- Press 'Durdur' button to quit the program
+
+### Application Interface
+
+<img width="1887" height="875" alt="Ekran görüntüsü 2026-04-28 223224" src="https://github.com/user-attachments/assets/47ae8791-388d-4fa5-9d3e-9bd74995ba39" />
+<img width="1881" height="864" alt="Ekran görüntüsü 2026-04-28 223200" src="https://github.com/user-attachments/assets/20aaf309-5cdf-4e40-9e46-bf0f1897d81e" />
+
 
 ### Contribution Guidelines
 
