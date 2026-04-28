@@ -44,7 +44,7 @@ except ImportError:
 
 # ── Test 5: Model dosyası ────────────────────────────────────
 import os
-model_path = os.path.join(os.path.dirname(__file__), "..", "models", "hand_landmarker.task")
+model_path = os.path.join(os.path.dirname(__file__), "models", "hand_landmarker.task")
 if os.path.isfile(model_path):
     size_mb = os.path.getsize(model_path) / 1024 / 1024
     print(f"{PASS} hand_landmarker.task mevcut ({size_mb:.1f} MB)")

@@ -1,53 +1,72 @@
-# AI-Based Sign Language Interpreter
+# AI-Powered Sign Language Interpreter (Local Dataset Pipeline)
 
-## Project Overview
+Bu depo, İşaret Dili Tercümanı projesi için **yerel video veri setlerinin işlenmesi** ve **LSTM model eğitimi** süreçlerine odaklanmaktadır.
 
-This project aims to help with hearing-impaired individuals. In the hospitals , Patiens can communicate bu using sign language to camera and ask a few questions to receptionist . Then AI can understand and translates into text what people say in real-time . Now, receptionist can understand and the next step is that receptionist write the answer and AI gives feedback to patient by using sign language pictures.
+## Kapsam
 
-### Features List
+- **Yerel Video İşleme**: ChaLearn/Local dataset videolarından MediaPipe landmark dizileri çıkarımı.
+- **LSTM Model Eğitimi**: RTX 4060 için optimize edilmiş, mixed-precision destekli eğitim pipeline'ı.
+- **Webcam Veri Toplama**: MediaPipe ile anlık webcam üzerinden veri seti oluşturma.
 
-1- Can translate into text in real-time.
+## Repo Yapısı
 
-2- Recognizes hospital jargon and medical signs.
+- `local_dataset_processor.py`: Yerel `_color.mp4` videolarını tam 30 frame'e resample eder ve `(30, 63)` landmark dizileri üretir.
+- `train_lstm.py`: RTX 4060 için optimize edilmiş (mixed precision, cuDNN LSTM) Keras eğitim scripti.
+- `collect_data.py`: Webcam üzerinden elle veri toplamak için kullanılır.
+- `_test_import.py`: MediaPipe ve OpenCV ortam kontrolü.
+- `data/`: `.npy` formatındaki landmark veri setlerinin saklandığı kök dizin.
+- `models/`: MediaPipe `.task` modelleri ve eğitilen Keras modellerinin saklandığı dizin.
 
-3- Enables to bidirectional communication between receptionist and patient.
+## Kurulum
 
-4- Maintains high level performance
+1. Gereksinimleri yükleyin:
 
-### Instalation Steps
+```bash
+pip install -r requirements.txt
+# Ek olarak TensorFlow (CUDA destekli) önerilir:
+pip install tensorflow[and-cuda]
+```
 
-1-Clone the repository: git clone https://github.com/zehrakelahmetoglu/Yapay-Zeka-Destekli-Isaret-Dili-Tercumani.git
+2. Ortamı test edin:
 
-2-Create and activate a virtual environment: 
+```bash
+python _test_import.py
+```
 
-```python -m venv venv```
-```.\venv\Scripts\activate```
+## Kullanım
 
-3-Install the required libraries: ```pip install -r requirements.txt```
+### 1. Yerel Videoları İşleme
+Harici diskteki veya yerel dizindeki videoları (ChaLearn formatında) `.npy` dosyalarına dönüştürmek için:
 
-4-Run the application: ```python main.py```
+```bash
+python local_dataset_processor.py --source "/path/to/videos" --workers 4
+```
 
-### Contribution Guidelines
+### 2. LSTM Model Eğitimi
+İşlenmiş verilerle RTX 4060 üzerinde eğitim başlatmak için:
 
-1-Fork the repository.
+```bash
+python train_lstm.py --epochs 100 --batch-size 64
+```
 
-2-Create a new branch for your feature: ``` git checkout -b feature/NewFeature ```
+### 3. Webcam ile Veri Toplama
+```bash
+python collect_data.py
+```
 
-3-Commit your changes and open a Pull Request.
+## Veri Formatı
 
-### License 
+- **Dosya Tipi**: `.npy`
+- **Boyut (Shape)**: `(30, 63)` (30 frame x 21 landmark x 3 koordinat)
+- **Normalizasyon**: Bilek (wrist) noktasına göre bağıl koordinatlar.
 
-MIT License
-For more information , please check the LICENSE document
+## Ekip
 
-### Credits/Team
+- Zehra Kelahmetoglu - Frontend
+- Atakan Yilmaz - Data
+- Zeynep Otegen - Optimization and Documentation
+- Elifnur Gunay - Test and Maintenance
+- Sevda Tuba Ehlibeyt - Backend
 
--Zehra Kelahmetoğlu - Frontend
-
--Atakan Yılmaz - Data
-
--Zeynep Ötegen -Optimization and Documentation
-
--Elifnur Günay -Test and Maintenance
-
--Sevda Tuba Ehlibeyt - Backend
+## Lisans
+MIT
