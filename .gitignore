@@ -1,19 +1,19 @@
-# Python sanal ortamı (En önemlisi!)
+# Sanal ortam
 venv/
-ENV/
 env/
 
-# Python sistem dosyaları
+# Python çöpleri
 __pycache__/
 *.py[cod]
 
-# İşletim sistemi çöpleri
-.DS_Store
-Thumbs.db
-
-# Geçici video ve resim dosyaları
+# --- PROJEYE ÖZEL GEÇİCİ DOSYALAR ---
+# Sadece 'temp_' ile başlayanları engellemek daha güvenlidir
 temp_*
-gelen_resim_*
-*.jpg
-*.mp4
-tahmin_1773794294_*
+tahmin_*
+
+# Eğer test videolarını bir klasöre koyacaksan o klasörü komple engelleyebilirsin
+test_videos/
+
+# --- GÜVENLİK ---
+# API anahtarları veya özel ayarlar (ileride eklersen diye)
+.env
