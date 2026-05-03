@@ -62,8 +62,7 @@ Returns the predicted sign language translation.
 * **Body:**
 ```json
 {
-  "status": "error",
-  "message": "Invalid Base64 string or missing image data."
+{"detail": "Resim işlenirken hata oluştu: [Hata Mesajı]"}
 }
 ```
 
