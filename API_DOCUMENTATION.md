@@ -15,7 +15,7 @@ Checks if the API and backend services are up and running.
 
 * **URL:** `/`
 * **Method:** `GET`
-* **Content-Type:** `application/json`
+* **Response Content-Type:** `application/json`
 
 ### Success Response
 * **Code:** 200 OK
@@ -62,8 +62,7 @@ Returns the predicted sign language translation.
 * **Body:**
 ```json
 {
-  "status": "error",
-  "message": "Invalid Base64 string or missing image data."
+  "detail": "Resim işlenirken hata oluştu: Görüntü çözümlenemedi."
 }
 ```
 
@@ -78,8 +77,11 @@ This endpoint processes short, pre-recorded videos. The backend extracts frames 
 * **Content-Type:** `multipart/form-data`
 
 ### Request Payload
+Content-Type: multipart/form-data
 
+Body: file (Binary video file)
 
+  
 Key: file
 Type: File (Seçilen video dosyası)
 
