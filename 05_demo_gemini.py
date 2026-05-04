@@ -21,12 +21,13 @@ from pathlib import Path
 import cv2
 import numpy as np
 import PIL.Image
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 COUNTDOWN_SEC = 3
 RECORD_FRAMES = 48       # kaydedilecek toplam frame
 SEND_FRAMES = 8          # Gemini'ye gönderilecek anahtar frame sayısı
-GEMINI_MODEL = "gemini-2.0-flash"
+GEMINI_MODEL = "gemini-2.5-flash-preview-05-20"
 
 log = logging.getLogger(__name__)
 logging.basicConfig(
@@ -82,7 +83,7 @@ def frames_to_pil(frames: list[np.ndarray], n: int) -> list[PIL.Image.Image]:
 
 
 def query_gemini(
-    model: genai.GenerativeModel,
+    client: genai.Client,
     frames: list[np.ndarray],
     prompt: str,
     tr_classes: list[str],
@@ -90,12 +91,13 @@ def query_gemini(
 ) -> tuple[str, str]:
     """Gemini'ye frame listesini gönderir, (tr, en) döner."""
     pil_images = frames_to_pil(frames, SEND_FRAMES)
-    contents = [prompt] + pil_images
+    contents: list = [prompt] + pil_images
 
     try:
-        response = model.generate_content(
-            contents,
-            generation_config=genai.GenerationConfig(
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=contents,
+            config=types.GenerateContentConfig(
                 temperature=0.1,
                 max_output_tokens=20,
             ),
@@ -164,8 +166,7 @@ def main() -> None:
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY gerekli.")
 
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(GEMINI_MODEL)
+    client = genai.Client(api_key=api_key)
     log.info("Gemini modeli: %s", GEMINI_MODEL)
 
     tr_classes, en_classes = load_class_list()
@@ -173,14 +174,13 @@ def main() -> None:
     prompt = build_prompt(tr_classes)
     log.info("%d sınıf yüklendi.", len(tr_classes))
 
-    # Webcam — Windows'ta 0, WSL'de usbipd sonrası 0
-    cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+    # Windows'ta DirectShow backend gerekli
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 854)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
     if not cap.isOpened():
-        raise RuntimeError("Webcam açılamadı (index=0).")
+        raise RuntimeError("Webcam açılamadı (index=0, CAP_DSHOW).")
     log.info("Webcam açıldı. SPACE ile kayıt başlat.")
 
     recorded_frames: list[np.ndarray] = []
@@ -232,7 +232,7 @@ def main() -> None:
                 cv2.waitKey(1)
 
                 log.info("Gemini'ye %d frame gönderiliyor...", SEND_FRAMES)
-                result = query_gemini(model, recorded_frames, prompt, tr_classes, en_map)
+                result = query_gemini(client, recorded_frames, prompt, tr_classes, en_map)
                 log.info("Gemini tahmini: %s (%s)", result[0], result[1])
                 waiting_gemini = False
 
