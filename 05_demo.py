@@ -45,25 +45,76 @@ C_YELLOW = (80, 220, 255)
 BAR_COLORS = [(0, 230, 0), (0, 200, 80), (0, 170, 120), (0, 140, 160), (0, 110, 200)]
 
 
-def load_class_map(path: str = "data/class_mapping_full.json") -> dict[int, dict]:
-    with open(path, encoding="utf-8") as f:
-        return {int(k): v for k, v in json.load(f).items()}
+def load_class_map(mapping_path: str = "data/class_mapping_full.json", label_map_path: str = "models/label_map.json") -> dict[int, dict]:
+    """Model Index -> Class ID -> Word mapping."""
+    with open(mapping_path, encoding="utf-8") as f:
+        mapping = json.load(f)
+    with open(label_map_path, encoding="utf-8") as f:
+        label_map = json.load(f)
+        
+    index_to_class_id = {idx: class_str.replace("CLASS_", "") 
+                         for class_str, idx in label_map.items() if "CLASS_" in class_str}
+    if "MERHABA" in label_map:
+        index_to_class_id[label_map["MERHABA"]] = "MERHABA"
+
+    final_map = {}
+    for idx, class_id in index_to_class_id.items():
+        if class_id in mapping:
+            final_map[idx] = mapping[class_id]
+        elif class_id == "MERHABA":
+            final_map[idx] = {"tr": "merhaba", "en": "hello"}
+    return final_map
 
 
 def extract_keypoints(results) -> np.ndarray:
-    """Holistic sonuçlarından 258-boyutlu keypoint vektörü — eğitimle birebir aynı."""
+    """Holistic sonuçlarından 258-boyutlu keypoint vektörü."""
     vec = np.zeros(INPUT_DIM, dtype=np.float32)
+    
+    # Toplanacak tüm noktalar (X ve Y)
+    points_x = []
+    points_y = []
+    
+    # Ham verileri topla
+    pose_lms = []
     if results.pose_landmarks:
-        for i, lm in enumerate(results.pose_landmarks.landmark):
-            vec[i * 4: i * 4 + 4] = [lm.x, lm.y, lm.z, lm.visibility]
+        for lm in results.pose_landmarks.landmark:
+            pose_lms.append([lm.x, lm.y, lm.z, lm.visibility])
+            points_x.append(lm.x); points_y.append(lm.y)
+    else:
+        pose_lms = [[0,0,0,0]] * 33
+        
+    lh_lms = []
     if results.left_hand_landmarks:
-        for i, lm in enumerate(results.left_hand_landmarks.landmark):
-            base = 132 + i * 3
-            vec[base: base + 3] = [lm.x, lm.y, lm.z]
+        for lm in results.left_hand_landmarks.landmark:
+            lh_lms.append([lm.x, lm.y, lm.z])
+            points_x.append(lm.x); points_y.append(lm.y)
+    else:
+        lh_lms = [[0,0,0]] * 21
+        
+    rh_lms = []
     if results.right_hand_landmarks:
-        for i, lm in enumerate(results.right_hand_landmarks.landmark):
-            base = 195 + i * 3
-            vec[base: base + 3] = [lm.x, lm.y, lm.z]
+        for lm in results.right_hand_landmarks.landmark:
+            rh_lms.append([lm.x, lm.y, lm.z])
+            points_x.append(lm.x); points_y.append(lm.y)
+    else:
+        rh_lms = [[0,0,0]] * 21
+
+    # Normalizasyon: Vücudu 0-1 arasına sığdır (Bounding Box)
+    if points_x and points_y:
+        min_x, max_x = min(points_x), max(points_x)
+        min_y, max_y = min(points_y), max(points_y)
+        width = (max_x - min_x) + 1e-6
+        height = (max_y - min_y) + 1e-6
+        
+        # Pose (33 * 4)
+        for i, (x, y, z, v) in enumerate(pose_lms):
+            vec[i*4 : i*4+4] = [(x - min_x)/width, (y - min_y)/height, z, v]
+        # Hands (21 * 3)
+        for i, (x, y, z) in enumerate(lh_lms):
+            vec[132 + i*3 : 132 + i*3+3] = [(x - min_x)/width, (y - min_y)/height, z]
+        for i, (x, y, z) in enumerate(rh_lms):
+            vec[195 + i*3 : 195 + i*3+3] = [(x - min_x)/width, (y - min_y)/height, z]
+            
     return vec
 
 
@@ -200,6 +251,9 @@ def main() -> None:
             log.warning("Frame okunamadı, çıkılıyor.")
             break
 
+        # Kamerayı yatayda çevir (Modelin eğitim verisiyle uyumlu olması için ŞART)
+        frame = cv2.flip(frame, 1)
+
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         rgb.flags.writeable = False
         results = holistic.process(rgb)
@@ -252,19 +306,21 @@ def main() -> None:
         if recording:
             buffer.append(kp)
             recorded_frames += 1
-            if recorded_frames >= TARGET_FRAMES:
+            if recorded_frames >= 64:  # Standart 64 frame
                 predictions = run_inference(model, buffer, device, class_map)
-                log.info("Tahmin: %s (%.1f%%)", predictions[0][0], predictions[0][2] * 100)
+                log.info("Tahmin: %s", predictions[0][0])
                 recording = False
 
-        # HUD
-        h, w = frame.shape[:2]
+        # Son tahmini her zaman çiz
+        draw_panel(frame, predictions, recorded_frames / 64 if recording else (1.0 if predictions else 0.0))
+
         if recording:
-            pct = recorded_frames / TARGET_FRAMES
-            cv2.rectangle(frame, (10, 10), (10 + int((w - 20) * pct), 30), (0, 0, 220), -1)
-            cv2.rectangle(frame, (10, 10), (w - 10, 30), (255, 255, 255), 2)
-            cv2.putText(frame, f"KAYIT  {int(pct * 100)}%  —  islaret yapiniz!", (14, 26),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1)
+            pct = min(1.0, recorded_frames / 64)
+            h, w = frame.shape[:2]
+            cv2.rectangle(frame, (20, h - 50), (w - 20, h - 20), (30, 30, 30), -1)
+            cv2.rectangle(frame, (20, h - 50), (20 + int((w - 40) * pct), h - 20), (0, 200, 0), -1)
+            cv2.putText(frame, "KAYDEDILIYOR...", (w // 2 - 80, h - 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         elif countdown_start is None:
             cv2.putText(frame, "SPACE: islaret kaydet (3 sn geri sayim)",
                         (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 2)
