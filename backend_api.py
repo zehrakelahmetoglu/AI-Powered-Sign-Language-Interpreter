@@ -28,11 +28,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # 1. Kelime Haritasını (Label Map) Yükle[cite: 1]
 try:
-    with open('label_map.json', 'r', encoding='utf-8') as f:
+    with open('models/label_map.json', 'r', encoding='utf-8') as f:
         label_map = json.load(f)
     id_to_word = {v: k for k, v in label_map.items()} # Sayıyı kelimeye çevirir
 except Exception as e:
-    print(f"⚠️ Label map yüklenemedi: {e}")
+    print(f"Uyari: Label map yuklenemedi: {e}")
     id_to_word = {i: f"Kelime_{i}" for i in range(226)}
 
 # 2. Modeli Başlat ve Ağırlıkları Yükle[cite: 1]
@@ -41,11 +41,18 @@ model = SignLSTM(input_dim=258, num_classes=226).to(device)
 
 try:
     # Atakan'ın dosyası .pt veya .pth ise burayı kullanıyoruz
-    model.load_state_dict(torch.load('tsl_lstm_best.pt', map_location=device))
+    checkpoint = torch.load('tsl_lstm_best.pt', map_location=device)
+    
+    # Checkpoint bir sözlükse ve içinde model_state varsa onu al, yoksa doğrudan yükle
+    if isinstance(checkpoint, dict) and 'model_state' in checkpoint:
+        model.load_state_dict(checkpoint['model_state'])
+    else:
+        model.load_state_dict(checkpoint)
+        
     model.eval()
-    print("✅ Yapay Zeka Beyni Başarıyla Yüklendi!")
+    print("AI Model yuklendi!")
 except Exception as e:
-    print(f"⚠️ Model ağırlıkları yüklenemedi: {e}. Sistem simülasyon modunda çalışacak.")
+    print(f"Uyari: Model agirliklari yuklenemedi: {e}. Sistem simulasyon modunda calisacak.")
 
 # --- 📝 MODELLER ---
 class ImageRequest(BaseModel):
