@@ -208,3 +208,28 @@ __marimo__/
 
 # Local instruction files
 CLAUDE.md
+
+# Ham veri ve büyük numpy keypoint dosyaları
+data/*.npy
+keypoints_full/
+keypoints_val/
+
+# Model checkpoint'leri (büyük dosyalar)
+checkpoints/
+
+# MediaPipe Tasks model dosyaları
+mediapipe_models/
+
+# TensorBoard logları
+runs/
+
+# Değerlendirme çıktıları
+outputs/
+
+# Log dosyaları
+logs/
+logs_*.txt
+
+# Geçici dosyalar
+tmp_videos/
+*.deb
