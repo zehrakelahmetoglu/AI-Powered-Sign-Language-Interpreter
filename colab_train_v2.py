@@ -8,12 +8,17 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+# 1. Model Mimarisi (Attention Pooling ile Güçlendirilmiş)
 class SignLSTM(nn.Module):
     def __init__(self, input_dim=258, hidden_dim=512, num_layers=3, num_classes=226):
         super().__init__()
         self.bn_input = nn.BatchNorm1d(input_dim)
         self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers=num_layers, 
                             batch_first=True, bidirectional=True, dropout=0.3)
+        
+        # Attention Mekanizması
+        self.attn_fc = nn.Linear(hidden_dim * 2, 1)
+        
         self.fc = nn.Sequential(
             nn.Linear(hidden_dim * 2, 256),
             nn.ReLU(),
@@ -23,18 +28,36 @@ class SignLSTM(nn.Module):
 
     def forward(self, x):
         B, T, F = x.shape
+        # Giriş Normalizasyonu
         x = self.bn_input(x.reshape(B * T, F)).reshape(B, T, F)
-        lstm_out, _ = self.lstm(x)
-        last_out = lstm_out[:, -1, :]
-        return self.fc(last_out)
+        
+        lstm_out, _ = self.lstm(x)  # (B, T, hidden*2)
+        
+        # Attention Pooling: Her bir karenin önemini hesapla
+        attn_scores = self.attn_fc(lstm_out) # (B, T, 1)
+        attn_weights = torch.softmax(attn_scores, dim=1) # (B, T, 1)
+        
+        # Ağırlıklı toplama (Context Vector)
+        context = torch.sum(lstm_out * attn_weights, dim=1) # (B, hidden*2)
+        
+        return self.fc(context)
 
+# 2. Veri Yükleyici (Dataset)
 class SignDataset(Dataset):
     def __init__(self, csv_path, npy_dir, label_map):
         self.df = pd.read_csv(csv_path, header=None, names=["id", "label"])
         self.npy_dir = npy_dir
         self.label_map = label_map
-        self.valid_samples = [row for _, row in self.df.iterrows() 
-                              if os.path.exists(os.path.join(npy_dir, f"{row['id']}.npy"))]
+        
+        # Dosyaların varlığını kontrol et ve sadece mevcut olanları listele
+        self.valid_samples = []
+        print(f"Veri kontrol ediliyor: {csv_path}")
+        for _, row in tqdm(self.df.iterrows(), total=len(self.df)):
+            npy_path = os.path.join(npy_dir, f"{row['id']}.npy")
+            if os.path.exists(npy_path):
+                self.valid_samples.append(row)
+        
+        print(f"Toplam geçerli örnek sayısı: {len(self.valid_samples)}")
 
     def __len__(self): return len(self.valid_samples)
 
@@ -44,34 +67,57 @@ class SignDataset(Dataset):
         label = self.label_map[str(row['label'])]
         return torch.tensor(data, dtype=torch.float32), torch.tensor(label, dtype=torch.long)
 
-def train_v2(npy_dir, train_csv, val_csv):
+# 3. Eğitim Fonksiyonu
+def train_v2(npy_dir, train_csv, val_csv, epochs=100, batch_size=64):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Eğitim başlıyor... Cihaz: {device}")
+    
+    # 1. Sınıf Eşleşmesini Oluştur (Hata payını sıfıra indirir)
     all_df = pd.read_csv(train_csv, header=None)
     unique_labels = sorted(all_df[1].unique())
     label_map = {str(label): i for i, label in enumerate(unique_labels)}
-    with open("label_map_v2.json", "w") as f:
-        json.dump(label_map, f)
     
-    model = SignLSTM(num_classes=len(unique_labels)).to(device)
+    # Label Map'i kaydet (Demo için kritik)
+    with open("label_map_v2.json", "w", encoding="utf-8") as f:
+        json.dump(label_map, f, indent=4)
+    print(f"label_map_v2.json oluşturuldu. Sınıf sayısı: {len(unique_labels)}")
+    
+    # 2. Model, Dataset ve Loader
+    num_classes = len(unique_labels)
+    model = SignLSTM(num_classes=num_classes).to(device)
+    
     train_ds = SignDataset(train_csv, npy_dir, label_map)
     val_ds = SignDataset(val_csv, npy_dir, label_map)
-    train_loader = DataLoader(train_ds, batch_size=64, shuffle=True)
-    val_loader = DataLoader(val_ds, batch_size=64)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=2)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, num_workers=2)
+    
+    # 3. Kayıp ve Optimizer
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+    optimizer = optim.AdamW(model.parameters(), lr=0.0005, weight_decay=1e-4)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
     
     best_acc = 0
-    for epoch in range(1, 101):
+    for epoch in range(1, epochs + 1):
+        # TRAIN
         model.train()
-        for x, y in tqdm(train_loader, desc=f"Epoch {epoch}"):
+        total_loss = 0
+        train_pbar = tqdm(train_loader, desc=f"Epoch {epoch}/{epochs} [Eğitim]")
+        for x, y in train_pbar:
             x, y = x.to(device), y.to(device)
-            optimizer.zero_grad(); out = model(x); loss = criterion(out, y)
-            loss.backward(); optimizer.step()
+            optimizer.zero_grad()
+            out = model(x)
+            loss = criterion(out, y)
+            loss.backward()
+            optimizer.step()
+            total_loss += loss.item()
+            train_pbar.set_postfix({"loss": f"{loss.item():.4f}"})
         
+        # VALIDATION
         model.eval()
         correct, total = 0, 0
         with torch.no_grad():
-            for x, y in val_loader:
+            for x, y in tqdm(val_loader, desc=f"Epoch {epoch}/{epochs} [Doğrulama]"):
                 x, y = x.to(device), y.to(device)
                 out = model(x); preds = out.argmax(dim=1)
                 correct += (preds == y).sum().item(); total += y.size(0)
