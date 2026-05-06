@@ -2,7 +2,7 @@
 AI-Powered Sign Language Interpreter
 =====================================
 Module  : Data Collection
-Author  : Atakan Yılmaz (AI & Data)
+Author  : Atakan Yılmaz and Zeynep Ötegen (AI & Data)
 Version : 2.0.0  (MediaPipe Tasks API — v0.10.x+ / Python 3.13 uyumlu)
 
 Açıklama:
@@ -48,7 +48,7 @@ except Exception as exc:
 # ─────────────────────────────────────────────────────────────
 #  MODEL DOSYASI — İlk çalıştırmada otomatik indirilir
 # ─────────────────────────────────────────────────────────────
-_MODEL_DIR  = os.path.join(os.path.dirname(__file__), "..", "models")
+_MODEL_DIR  = os.path.join(os.path.dirname(__file__), "models")
 MODEL_PATH  = os.path.join(_MODEL_DIR, "hand_landmarker.task")
 MODEL_URL   = (
     "https://storage.googleapis.com/mediapipe-models/"
@@ -106,7 +106,7 @@ CAMERA_INDEX  = 0
 CAMERA_WIDTH  = 640
 CAMERA_HEIGHT = 480
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 # ─────────────────────────────────────────────────────────────
 #  RENK PALETİ (BGR)

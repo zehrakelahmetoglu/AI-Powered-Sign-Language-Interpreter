@@ -1,47 +1,72 @@
-# AI-Based Sign Language Interpreter
+# AI-Powered Sign Language Interpreter (Local Dataset Pipeline)
 
-## Project Overview
+Bu depo, İşaret Dili Tercümanı projesi için **yerel video veri setlerinin işlenmesi** ve **LSTM model eğitimi** süreçlerine odaklanmaktadır.
 
- This project aims to help hearing-impaired individuals. In hospitals, patients can communicate by using sign language to the camera and ask questions to receptionist . Then, the AI can understand and translate into text what people say in real-time . 
- This project is an MVP (Minimum Viable Product) and it works in one direction between patients to receptionist. When you open the project you can see the split-screen. The left side has your camera view which can recognize the sign-language and The right side has a text part that receptionist can read What the patient say in real-time.
- We wanted to focus on the hospital jargons on this project , There are 50 words for now.
+## Kapsam
 
-### Features List
+- **Yerel Video İşleme**: ChaLearn/Local dataset videolarından MediaPipe landmark dizileri çıkarımı.
+- **LSTM Model Eğitimi**: RTX 4060 için optimize edilmiş, mixed-precision destekli eğitim pipeline'ı.
+- **Webcam Veri Toplama**: MediaPipe ile anlık webcam üzerinden veri seti oluşturma.
 
-1- Can translate into text in real-time.
+## Repo Yapısı
 
-2- Recognizes hospital jargon that we chose specific words (50 word)
+- `local_dataset_processor.py`: Yerel `_color.mp4` videolarını tam 30 frame'e resample eder ve `(30, 63)` landmark dizileri üretir.
+- `train_lstm.py`: RTX 4060 için optimize edilmiş (mixed precision, cuDNN LSTM) Keras eğitim scripti.
+- `collect_data.py`: Webcam üzerinden elle veri toplamak için kullanılır.
+- `_test_import.py`: MediaPipe ve OpenCV ortam kontrolü.
+- `data/`: `.npy` formatındaki landmark veri setlerinin saklandığı kök dizin.
+- `models/`: MediaPipe `.task` modelleri ve eğitilen Keras modellerinin saklandığı dizin.
 
-3- There is a user-friendly interface with split-screen for patients and receptionist
+## Kurulum
 
-4- Maintains high level performance
+1. Gereksinimleri yükleyin:
 
-### Requirements
+```bash
+pip install -r requirements.txt
+# Ek olarak TensorFlow (CUDA destekli) önerilir:
+pip install tensorflow[and-cuda]
+```
 
-1- A working webcam
+2. Ortamı test edin:
 
-2- Python 3.8 OR higher
+```bash
+python _test_import.py
+```
 
-3- Enough and Good Lighting Conditions
+## Kullanım
 
-### Tech Stack
+### 1. Yerel Videoları İşleme
+Harici diskteki veya yerel dizindeki videoları (ChaLearn formatında) `.npy` dosyalarına dönüştürmek için:
 
-1-TensorFlow
+```bash
+python local_dataset_processor.py --source "/path/to/videos" --workers 4
+```
 
-2-Python
+### 2. LSTM Model Eğitimi
+İşlenmiş verilerle RTX 4060 üzerinde eğitim başlatmak için:
 
-3-MediaPipe
+```bash
+python train_lstm.py --epochs 100 --batch-size 64
+```
 
-4-OpenCV
+### 3. Webcam ile Veri Toplama
+```bash
+python collect_data.py
+```
 
-### Installation Steps
+## Veri Formatı
 
-1-Clone the repository: git clone https://github.com/zehrakelahmetoglu/Yapay-Zeka-Destekli-Isaret-Dili-Tercumani.git
+- **Dosya Tipi**: `.npy`
+- **Boyut (Shape)**: `(30, 63)` (30 frame x 21 landmark x 3 koordinat)
+- **Normalizasyon**: Bilek (wrist) noktasına göre bağıl koordinatlar.
 
-2-Create and activate a virtual environment: 
+## Ekip
 
-```python -m venv venv```
-```.\venv\Scripts\activate```
+- Zehra Kelahmetoglu - Frontend
+- Atakan Yilmaz - Data
+- Zeynep Otegen - Optimization and Documentation
+- Elifnur Gunay - Test and Maintenance
+- Sevda Tuba Ehlibeyt - Backend
 
 3-Install the required libraries: ```pip install -r requirements.txt```
 
